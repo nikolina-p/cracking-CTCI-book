@@ -35,6 +35,8 @@ class BST:
                     _.append(parent.right)
                 else:
                     _.append("-")
+            else:
+                _ += ['-', '-']
         parents = _
 
         if any(isinstance(item, Node) for item in parents):
