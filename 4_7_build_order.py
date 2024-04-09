@@ -16,9 +16,9 @@ def build_order(projects, dependencies):
     is no valid build order, return an error.
     """
     try:
-        no_preceding = list(projects)  # list of strings, copy of 'projects' list
-        vertices = {name: Vertex(name) for name in projects}
-        depends_on = defaultdict(list)  # project: list of preceding projects
+        no_preceding = list(projects)  # keep track of projects that have no preceding projects [str]
+        vertices = {name: Vertex(name) for name in projects}  # graph nodes(vertices)
+        depends_on = defaultdict(list)  # dictionary of project(key): list of preceding projects(value)
 
         # build graph and find vertices(projects) that have no preceding projects (starting projects)
         for project in vertices:
@@ -33,18 +33,12 @@ def build_order(projects, dependencies):
             # if there are no projects that have no preceding projects return Error
             raise IndexError("No valid build order")
 
-        # initialize breath first traversal
-        visited = [vertices[name] for name in no_preceding]
-        to_be_visited = []
-        for start_vx in visited:
-            for adj in start_vx.adjacent:
-                if adj not in to_be_visited:
-                    to_be_visited.append(adj)
-                depends_on[adj.name].remove(start_vx.name)  # remove visited node from all dependencies
-
         # do the breath first traversal
+        to_be_visited = [vertices[name] for name in no_preceding]
+        visited = []
         while to_be_visited:
-            # while there are elements in to_be_visited, take first one, check if it has preceding; if yes, check next
+            # while there are elements in to_be_visited, take first one, check if it has preceding;
+            # if yes, move to the next; if no - add it to visited and process adjacent vertices
             cycle = True
             for vx in to_be_visited:
                 if not depends_on[vx.name]:
@@ -56,9 +50,10 @@ def build_order(projects, dependencies):
                         for adj in vx.adjacent:
                             if adj not in to_be_visited:
                                 to_be_visited.append(adj)
-                            depends_on[adj.name].remove(vx.name)
+                            depends_on[adj.name].remove(vx.name)  # remove visited node from all its dependencies
                     else:
                         raise IndexError(f"The {vx.name} already visited. The graph has cycle, no possible build order")
+            # cycle will be True if all to_be_visited vertices depend on some other vertex
             if cycle:
                 raise IndexError("Cycle. No valid build order")
 
