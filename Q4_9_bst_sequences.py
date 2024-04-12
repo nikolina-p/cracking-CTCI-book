@@ -138,10 +138,11 @@ class BinarySearchTree:
 if __name__ == "__main__":
     tree = BinarySearchTree()
     #a = [8, 10, 5]
-    a = [8, 10, 5, 3, 6, 9, 23]
+    # a = [8, 10, 5, 3, 6, 9, 23]
+    b = [5, 3, 7, 2, 6]
 
     # CREATE A TEST TREE FROM AN ARRAY AND PRINT TREE
-    tree.insert_array(a)
+    tree.insert_array(b)
     tree_print(tree.root)
 
     permutations = tree.permutate_tree()
@@ -152,22 +153,18 @@ if __name__ == "__main__":
 
 """
 OUTPUT:
-
- 8        
-    /        \    
-    5        10    
+          5           
+       /      \     
+     3          7     
   /    \    /    \  
-  3    6    9    23  
-[8, 5, 10, 3, 6, 9, 23]
-[8, 5, 10, 3, 6, 23, 9]
-[8, 5, 10, 3, 9, 6, 23]
-[8, 5, 10, 3, 9, 23, 6]
-    ...
-    ...
-    ...
-[8, 10, 23, 5, 6, 3, 9]
-[8, 10, 23, 9, 5, 3, 6]
-[8, 10, 23, 9, 5, 6, 3]
-There are 80 permutations.
+  2    *    6    *  
+  
+[5, 3, 7, 2, 6]
+[5, 3, 7, 6, 2]
+[5, 3, 2, 7, 6]
+[5, 7, 3, 6, 2]
+[5, 7, 3, 2, 6]
+[5, 7, 6, 3, 2]
+There are 6 permutations.
 
 """
