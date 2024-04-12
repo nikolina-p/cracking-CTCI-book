@@ -1,5 +1,7 @@
 """
-function that will print binary tree
+tree_print(node: Node) - function prints the binary tree structure under the given node
+in_level_traversal(node: Node) - function returns a list of tree levels, where tree level
+                                is a list of nodes in the current level
 """
 
 
@@ -88,6 +90,3 @@ if __name__ == '__main__':
     node_c.right = node_f
 
     tree_print(node_a)
-
-    s = "nikolina"
-    print(s[:None])
