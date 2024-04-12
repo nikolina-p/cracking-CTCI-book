@@ -26,6 +26,10 @@ class BinaryTree:
         counter = [1] if not counter else counter
         index = [-1, -1, -1] if not index else index
 
+        if all(element != -1 for element in index):
+            # if all three indexes are found stop recursion, return index
+            return index
+
         if current.left:
             self.enumerate(node1, node2, current.left, counter, index)
 
@@ -36,7 +40,7 @@ class BinaryTree:
         if current == self.root:
             index[2] = counter[0]
 
-        print(f"{counter} : {current.value}")
+        # print(f"{counter} : {current.value}")
         counter[0] += 1
 
         if current.right:
@@ -55,7 +59,7 @@ class BinaryTree:
             current = self.root if not current else current
             index = self.enumerate(node1, node2, current)
 
-            print(index)
+            # print(index)
 
             if index[0] == -1 or index[1] == -1 or index[2] == -1:
                 raise IndexError("Node is not in the tree.")
@@ -70,6 +74,11 @@ class BinaryTree:
             if index[0] > index[2] and index[1] > index[2]:
                 subtree = BinaryTree(current.right)
                 return subtree.find_common_ancestor(node1, node2)
+
+            if index[0] == index[2] or index[1] == index[2]:
+                # if the root is one of the nodes it will return root
+                return current
+
         except IndexError as err:
             print(err)
 
@@ -95,19 +104,19 @@ if __name__ == "__main__":
 
     tree1 = BinaryTree(a)
 
-    print("Common ancestor: ", tree1.find_common_ancestor(f, h).value)
+    tests = [(a, g), (d, f), (g, h), (h, d), (b, i)]
+
+    for node1, node2 in tests:
+        print(f"Common ancestor of {node1.value} and {node2.value}:", end=" ")
+        ancestor = tree1.find_common_ancestor(node1, node2)
+        if ancestor:
+            print(ancestor.value)
 
     """
                 a
             b          c
         d      e     f   g
               h
+              
+        i - node not in the tree
     """
-
-
-
-
-
-
-
-
