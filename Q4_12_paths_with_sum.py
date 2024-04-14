@@ -6,6 +6,8 @@ given value. The path does not need to start or end at the root or a leaf, but i
 
 """
 from treeprint import tree_print
+from collections import defaultdict
+import copy
 
 
 class Node:
@@ -25,32 +27,28 @@ def paths_with_sum(node, target, current_sum=None, previous=None, counter=None) 
     if not current_sum:
         current_sum = [0]
 
-    if not previous:   # keeps track of node values on the current path
-        previous = []
+    if not previous:   # keeps track of previous sums on the current path
+        previous = defaultdict(list)
 
     if not counter:
         counter = [0]
 
     current_sum[0] += node.value
-    previous.append(node.value)
+    previous[current_sum[0]].append(True)
 
     if current_sum[0] == target:
         counter[0] += 1
 
-    # check subpaths to current node, by subtracting previous node values from root to current node's parent
-    _ = current_sum[0]
-    for i, val in enumerate(previous):
-        if i < len(previous) - 2:
-            _ -= val
-            if _ == target:
-                counter[0] += 1
+    # check if on the current path, there are sums that are equal to (current_sum-target)
+    if previous[current_sum[0] - target]:
+        counter[0] += len(previous[current_sum[0]-target])
 
     if node.left:
         # pass the COPY of current_sum and previous so that recursion calls do not interfere with each other
-        paths_with_sum(node.left, target, current_sum[:], previous[:], counter)
+        paths_with_sum(node.left, target, current_sum[:], copy.deepcopy(previous), counter)
 
     if node.right:
-        paths_with_sum(node.right, target, current_sum[:], previous[:], counter)
+        paths_with_sum(node.right, target, current_sum[:], copy.deepcopy(previous), counter)
 
     return counter[0]
 
@@ -78,6 +76,32 @@ if __name__ == '__main__':
     tree_print(n1)
 
     no_of_paths = paths_with_sum(n1, 8)
+    print(f"Number of paths is: {no_of_paths}")
+
+    k1 = Node(2)
+    k2 = Node(3)
+    k3 = Node(-3)
+    k4 = Node(4)
+    k5 = Node(1)
+    k6 = Node(2)
+    k7 = Node(-2)
+    k8 = Node(4)
+    k9 = Node(4)
+    k10 = Node(6)
+
+    k1.left = k2
+    k1.right = k3
+    k2.left = k4
+    k2.right = k5
+    k3.right = k6
+    k4.left = k7
+    k5.right = k8
+    k6.left = k9
+    k6.right = k10
+
+    tree_print(k1)
+
+    no_of_paths = paths_with_sum(k1, 5)
     print(f"Number of paths is: {no_of_paths}")
 
 """
