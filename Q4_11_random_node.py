@@ -3,6 +3,8 @@
 i n s e r t , f i n d , and d e l e t e , has a method getRandomNode() which returns a random node
 from the tree. All nodes should be equally likely to be chosen. Design and implement an algorithm
 for getRandomNode, and explain how you would implement the rest of the methods.
+
+My assumption: this is not a BST, data stored in nodes can be of any type, not necessarily integer
 """
 from treeprint import tree_print
 from random import randint
@@ -13,6 +15,8 @@ class Node:
         self.data = data
         self.left = None
         self.right = None
+        self.size = 1
+        self.parent = None
 
     def __str__(self):
         return str(self.data)
@@ -22,27 +26,42 @@ class BinaryTree:
     def __init__(self, root: Node = None):
         self.root = root
 
-    def insert(self, data):
+    def __insert_node(self, data):
+        """helper function to insert. Does in-level traversal and inserts the node on the first empty spot"""
         if self.root is None:
             self.root = Node(data)
             return self.root
 
         parents = [self.root]
+        new = Node(data)
         while True:
             _ = []
             for parent in parents:
                 if not parent.left:
-                    parent.left = Node(data)
-                    return parent.left
+                    parent.left = new
+                    new.parent = parent
+                    return new
                 else:
                     _.append(parent.left)
 
                 if not parent.right:
-                    parent.right = Node(data)
-                    return parent.right
+                    parent.right = new
+                    new.parent = parent
+                    return new
                 else:
                     _.append(parent.right)
             parents = _
+
+    def insert(self, data):
+        """do the in-level traversal and insert the node on the first empty spot.
+        Update size attribute of each parent node on the path from the root to the new node"""
+        new = self.__insert_node(data)
+
+        # update size of parent nodes on the path
+        _ = new
+        while _.parent is not None:
+            _ = _.parent
+            _.size += 1
 
     def find(self, data):
         # do the level-order traversal
@@ -70,96 +89,84 @@ class BinaryTree:
                 return None
             parents = _
 
-    def __find_node_and_parent(self, data, current: Node = None, parent: Node = None):
-        # do the pre-order traversal
-        if self.root is None:
-            return None, None
+    def __update_path(self, del_node):
+        """helper method to delete(). Updates size attribute of elements on the path
+        from deleted node to the root"""
+        if del_node is None:
+            return
 
-        if self.root.data == data:
-            return self.root, None
-
-        if not current:
-            current = self.root
-
-        if not parent:
-            parent = self.root
-
-        if current.data == data:
-            return current, parent
-
-        parent = current
-
-        if current.left:
-            left_node, left_parent = self.__find_node_and_parent(data, current.left, parent)
-            if left_node:
-                return left_node, left_parent
-
-        if current.right:
-            right_node, right_parent = self.__find_node_and_parent(data, current.right, parent)
-            if right_node:
-                return right_node, right_parent
-
-        return None, None
+        while del_node:
+            del_node.size -= 1
+            del_node = del_node.parent
 
     def delete(self, data):
-        # find the node, while also keeping the reference to its parent
-        # find a leaf under the deleted node and put it in the place of deleted node
-        # assumption: it is "just" binary tree, there are no requirements for tree structure or order of nodes
+        # find the node
+        # find the leaf under the deleted node and put it in the place of deleted node
+        # assumption: it is "just" a binary tree, there are no requirements for tree structure or order of nodes
 
-        del_node, del_parent = self.__find_node_and_parent(data)
+        del_node = self.find(data)
+        del_parent = del_node.parent
 
         if del_node is None:
             return
 
-        # if the node to be deleted is leaf
-        if del_node.left is None and del_node.right is None:
-            if del_parent.left == del_node:
-                del_parent.left = None
-            else:
-                del_parent.right = None
-            del del_node
-            return
-
-        # find the "right leaf" (could be left also) - right descendant that has no more left or right children
+        # find the leaf
         leaf = del_node
-        leaf_parent = del_parent
         while True:
             while leaf.right:
-                leaf_parent = leaf
                 leaf = leaf.right
 
             # check if "right leaf" has left children
             while leaf.left:
-                leaf_parent = leaf
                 leaf = leaf.left
 
-            if leaf.left is None:
+            if leaf.left is None and leaf.right is None:
                 break
 
-        # break parent-child relationship of the leaf
-        # make leaf a child of a del_parent (left or right)
-        # add del_node's children to leaf
-        # set del_node left and right to None and delete
-        if leaf_parent.left == leaf:
-            leaf_parent.left = None
-        else:
-            leaf_parent.right = None
-
-        # check if the node to be deleted is root (no parent node)
-        if not del_parent:
-            self.root = leaf
-        else:
-            if del_parent.left == del_node:
-                del_parent.left = leaf
+        # delete the node
+        if del_node != leaf:
+            # case when node to be deleted is not the leaf - do the swap, put the leaf on the place of deleted
+            leaf.size = del_node.size
+            # set parent -> child relationships
+            if del_parent:
+                if del_parent.left == del_node:
+                    del_parent.left = leaf
+                elif del_parent.right == del_node:
+                    del_parent.right = leaf
             else:
-                del_parent.right = leaf
+                leaf.size = self.root.size
+                self.root = leaf
 
-        leaf.left = del_node.left
-        leaf.right = del_node.right
+            if leaf.parent:
+                if leaf.parent.left == leaf:
+                    leaf.parent.left = None
+                elif leaf.parent.right == leaf:
+                    leaf.parent.right = None
 
-        del_node.left = None
-        del_node.right = None
-        del del_node
+            leaf.left = del_node.left
+            leaf.right = del_node.right
+
+            self.__update_path(leaf)
+
+            # set child -> parent relationships
+            leaf.parent = del_parent
+
+            if del_node.left:
+                del_node.left.parent = leaf
+            if del_node.right:
+                del_node.right.parent = leaf
+        else:
+            # case when node to be deleted in leaf
+            if del_parent:
+                # if the node to be deleted is not root, delete parent relationship
+                if del_parent.left == del_node:
+                    del_parent.left = None
+                else:
+                    del_parent.right = None
+            # update size up to the root
+            self.__update_path(del_node)
+            del del_node
+            return
 
     def __get_depth(self):
         # do the level-order traversal
@@ -204,34 +211,34 @@ class BinaryTree:
 
         return counter[0]
 
-    def get_random_node(self):
+    def get_random_node(self, current: Node = None, n=None):
         # SOLUTION 1:
-        # get a tree depth
-        # random number of times (choose this number from 1 to depth) go randomly left or right
+        # get a random number N (from 1 to size of the tree - number of nodes)
+        # using size property of tree nodes, find Nth node in a tree and return it
         if self.root is None:
             return None
 
-        depth = self.__get_depth()
-        go_down = randint(0, depth-1)
+        if current is None:
+            current = self.root
 
-        current = self.root
-        while go_down > 0:
-            left = randint(0, 1)
-            _ = current
-            if left:
-                # try going left
-                _ = current.left if current.left else current.right
-            else:
-                _ = current.right if current.right else current.left
+        if n is None:
+            n = randint(1, self.root.size)
 
-            if not _:
-                # if can not go down
+        if current.left:
+            if n == current.left.size + 1:
                 return current
-            else:
-                current = _
-            go_down -= 1
 
-        return current
+            if n <= current.left.size:
+                return self.get_random_node(current.left, n)
+            else:
+                if current.right:
+                    return self.get_random_node(current.right, n - current.left.size - 1)
+        else:
+            if n == current.size:
+                return current
+
+            if current.right:
+                return self.get_random_node(current.right, n - 1)
 
     def get_random_inorder(self, current: Node = None, n=None, counter=None):
         # SOLUTION 2:
@@ -275,12 +282,21 @@ if __name__ == "__main__":
     tree_print(bt.root)
 
     # find() test
-    """node = bt.find(17)
+    """node = bt.find(9)
     print(node)"""
 
     # delete() test
-    """bt.delete(2)
+    """
+    print(bt.root.size)
+    print(bt.root.left.size)
+    print(bt.root.right.size)
+    
+    bt.delete(8)
     tree_print(bt.root)"""
 
-    print("Random node (solution 1): ", bt.get_random_node())
-    print("Random node (solution 2): ", bt.get_random_inorder())
+    print("Root size: ", bt.root.size)
+    print("Left size: ", bt.root.left.size)
+    print("Right size: ", bt.root.right.size)
+
+    print("RANDOM (solution 1): ", bt.get_random_node())
+    print("RANDOM (solution 2): ", bt.get_random_inorder())
